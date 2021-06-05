@@ -1,9 +1,9 @@
-BINS=client server
+BINS=client.out server.out
 LIBS=-lpthread
 
 all: $(BINS)
 
-%: %.c
+%.out: %.c
 	gcc $^ -o $@ $(LIBS)
 
 clean:
