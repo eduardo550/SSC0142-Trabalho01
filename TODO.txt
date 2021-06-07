@@ -1,0 +1,3 @@
+codar a interface do cliente
+planejar a troca de mensagens
+criar um sistema de contas para guardar os arquivos

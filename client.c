@@ -4,8 +4,22 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <string.h>
+#include <errno.h>
 
 #define PORT 4206
+#define FLAGS 0
+
+int handle_connection(int sockfd) {
+    ssize_t len;
+    char *msg = "123";
+    int flags = 0;
+
+    len = send(sockfd, msg, 4, FLAGS);
+
+
+    return 0;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -31,11 +45,13 @@ int main(int argc, char *argv[]) {
 
     // Fazendo a conexao
     if(connect(sock, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
-        printf("Connection failed. Aborting.\n");
+        printf("Connection failed. Aborting. %s\n", strerror(errno));
         return 1;
     }
     printf("Connected.\n");
     // Criar funcao para troca de msgs
+    handle_connection(sock);
+
 
     close(sock);
     return 0;
