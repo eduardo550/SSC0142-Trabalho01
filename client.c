@@ -11,13 +11,47 @@
 #define FLAGS 0
 
 int handle_connection(int sockfd) {
-    ssize_t len;
-    char *msg = "123";
-    int flags = 0;
+    //Exemplo comunicaçao
+    // ssize_t len;
+    // char *msg = "123";
+    // int flags = 0;
+    // len = send(sockfd, msg, 4, FLAGS);
 
-    len = send(sockfd, msg, 4, FLAGS);
+    char username[17]; //16 + '\0'
+    /*Interface:
+        Inicialemente pergunta se quer criar uma conta ou logar
+        Conta só tem username, de no max 16 chars
+        Mandar o username, servidor retorna 0 se sucesso, -1 se a conta existe no caso de criar, ou se n existe no caso de logar
+        Depois, um prompt com opçoes
+            1. Listar os arquivos no server
+            2. Mandar um arquivo para o sr
+            3. Copiar um arquivo do server
+            4. Remover um arquivo do server
+            5. Remover todos os arquivos do server
+            6. Remover a conta
+            7. Sair
+        Faz um send com o n da opcao, e outro com o arg, se necessario
+        Args:
+            1. Nenhum
+            2. O arquivo
+            3. O nome do arquivo
+            4. O nome do arquivo
+            5. Nenhum
+            6. Nenhum
+            7. Nenhum, termina a conexao e programa acaba
+        Servidor retorna:
+            1. 0 (sucesso) ou -1 (fail)
+            2. n_bytes (sucesso) ou -1 (fail)
+            3. o arquivo (sucesso) ou -1 (fail)
+            4. 0 (sucesso) ou -1 (fail)
+            5. 0 (sucesso) ou -1 (fail)
+            6. 0 (sucesso) ou -1 (fail)
+            7. Nada, programa acaba
+    */
 
-
+    //Case 7
+    //Um print aqui tbm
+    close(sockfd);
     return 0;
 }
 
@@ -53,6 +87,5 @@ int main(int argc, char *argv[]) {
     handle_connection(sock);
 
 
-    close(sock);
     return 0;
 }
