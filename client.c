@@ -19,9 +19,9 @@ int handle_connection(int sockfd) {
 
     char username[17]; //16 + '\0'
     /*Interface:
-        Inicialemente pergunta se quer criar uma conta ou logar
+        Inicialemente pergunta se quer criar uma conta ou logar, manda a op pro servidor (0 criar, 1 logar)
         Conta só tem username, de no max 16 chars
-        Mandar o username, servidor retorna 0 se sucesso, -1 se a conta existe no caso de criar, ou se n existe no caso de logar
+        Mandar o username, servidor retorna strlen(username) se sucesso, -1 se a conta existe no caso de criar, ou se n existe no caso de logar
         Depois, um prompt com opçoes
             1. Listar os arquivos no server
             2. Mandar um arquivo para o sr
