@@ -27,7 +27,8 @@ void func(int sockfd)
 	char username[17];
 	int n;
 	FILE *fp;
-	printf("Criar(0) ou Logar(1)??\n");
+	for(;;){
+	printf("Criar(0), Logar(1) ou Sair(7)?\n");
 	bzero(buff, sizeof(buff));
 	n = 0;
 	while ((buff[n++] = getchar()) != '\n')
@@ -63,9 +64,17 @@ void func(int sockfd)
 				while ((buff[n++] = getchar()) != '\n')
 					;
 				write(sockfd, buff, sizeof(buff));
-				if (strncmp(buff, "2", 1) == 0) {
+				if (strncmp(buff, "1", 1) == 0){
+					read(sockfd, buff, sizeof(buff));
+					while(strncmp(buff, "-1", 2) != 0){
+						printf("X%sX\n", buff);
+						read(sockfd, buff, sizeof(buff));
+					}
+				}
+				else if (strncmp(buff, "2", 1) == 0) {
 					//send file
 					printf("Sending\n");
+					bzero(name, sizeof(name));
 					bzero(buff, sizeof(buff));
 					n = 0;
 					while ((buff[n++] = getchar()) != '\n')
@@ -73,6 +82,7 @@ void func(int sockfd)
 					printf("File Name = %s\n", buff);
 					strncpy(name, buff, n-1);
 					fp = fopen(name, "r");
+					write(sockfd, name, sizeof(name));
 					if (fp == NULL) {
 						perror("[-]Error in reading file.");
 						exit(1);
@@ -82,12 +92,23 @@ void func(int sockfd)
 					printf("Sent File\n");
 				}
 				else if (strncmp(buff, "3", 1) == 0 || strncmp(buff, "4", 1) == 0) {
-					//send file_name
+					printf("Sending File_Name\n");
+					bzero(name, sizeof(name));
+					bzero(buff, sizeof(buff));
+					n = 0;
+					while ((buff[n++] = getchar()) != '\n')
+						;
+					strncpy(name, buff, n-1);
+					printf("File Name = %s\n", name);
+					write(sockfd, name, sizeof(name));
 					printf("Sent File_Name\n");
 				}
 				else if (strncmp(buff, "7", 1) == 0) {
 					printf("Client Exit...\n");
 					break;
+				}
+				else {
+					printf("Option %s\n", buff);
 				}
 			}
 			break;
@@ -100,6 +121,11 @@ void func(int sockfd)
 	else if (strncmp(buff, "Criando", 7) == 0) {
 		printf("Creating\n");		
 	}
+	else if (strncmp(buff, "Saindo", 6) == 0) {
+		printf("Client Conta Exit...\n");
+		break;
+	}
+}
 }
 
 int main()
