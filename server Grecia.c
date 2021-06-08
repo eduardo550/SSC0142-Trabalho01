@@ -45,7 +45,6 @@ void send_file(FILE *fp, int sockfd){
 void func(int sockfd)
 {
 	char buff[MAX];
-	char user[17];
 	char path[20];
 	char file_path[40];
 	FILE *fp;
@@ -59,7 +58,7 @@ void func(int sockfd)
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
 		printf("From client: %s\n", buff);
-		// 1 - Login
+		// 1 - Fazer Login
 		if (strncmp("1", buff, 1) == 0) {
 			bzero(buff, MAX);
 			bzero(path, 20);
@@ -73,112 +72,122 @@ void func(int sockfd)
 				write(sockfd, buff, sizeof(buff)); 
 				retval=strlen(buff);
 				send(sockfd, &retval, sizeof(int), FLAGS);
-				for(;;){
-				read(sockfd, buff, sizeof(buff));
-				if (strncmp("1", buff, 1) == 0) {
-					d = opendir(path);
-				    while ((dir = readdir(d)) != NULL){
-				    	printf("%s\n", dir->d_name);
-				    	strcpy(buff,dir->d_name);
-			        	write(sockfd, buff, sizeof(buff));
-			        	bzero(buff, MAX);
-			    	}
-			    	closedir(d);
-					write(sockfd, "-1", 2);
-					printf("Exit Loop\n");
-				}
-				else if (strncmp("2", buff, 1) == 0) {
-					printf("Receiving\n");
+					for(;;){
+					//Option Selector
 					read(sockfd, buff, sizeof(buff));
-					bzero(file_path, 40);
-					strcat(file_path, path);
-					strcat(file_path, "/");
-					strcat(file_path, buff);
-					fp = fopen(file_path, "w");
-					bzero(buff, MAX);
-					read(sockfd, buff, sizeof(buff));
-					fprintf(fp, "%s", buff);
-	    			bzero(buff, MAX);
-	  				fclose(fp);
-					printf("Done\n");
-				}
-				else if (strncmp("3", buff, 1) == 0) {
-					printf("Copying\n");
-					bzero(buff, sizeof(buff));
-					read(sockfd, buff, sizeof(buff));
-					bzero(file_path, 40);
-					strcat(file_path, path);
-					strcat(file_path, "/");
-					strcat(file_path, buff);
-					fp = fopen(file_path, "r");
-					if (fp == NULL) {
-						perror("[-]Error in reading file.");
-						exit(1);
+					//Option Selector 1 - List Files
+					if (strncmp("1", buff, 1) == 0) {
+						d = opendir(path);
+					    while ((dir = readdir(d)) != NULL){
+					    	printf("%s\n", dir->d_name);
+					    	strcpy(buff,dir->d_name);
+				        	write(sockfd, buff, sizeof(buff));
+				        	bzero(buff, MAX);
+				    	}
+				    	closedir(d);
+						write(sockfd, "-1", 2);
+						printf("Exit Loop\n");
 					}
-					send_file(fp, sockfd);
-					fclose(fp);
-					printf("Done\n");
-				}
-				else if (strncmp("4", buff, 1) == 0) {
-					printf("Removing Single File\n");
-					read(sockfd, buff, sizeof(buff));
-					bzero(file_path, 40);
-					strcat(file_path, path);
-					strcat(file_path, "/");
-					strcat(file_path, buff);
-					if (remove(file_path) == 0)
-						printf("Deleted successfully\n");
-					else
-						printf("Unable to delete the file\n");
-				}
-				else if (strncmp("5", buff, 1) == 0) {
-					printf("Remove All Files\n");
-					d = opendir(path);
-				    while ((dir = readdir(d)) != NULL){
-				    	printf("%s\n", dir->d_name);
-				    	scanf("%d", &retval);
-				    	bzero(file_path, 40);
+					//Option Selector 2 - Receive File from Client
+					else if (strncmp("2", buff, 1) == 0) {
+						printf("Receiving\n");
+						read(sockfd, buff, sizeof(buff));
+						bzero(file_path, 40);
 						strcat(file_path, path);
 						strcat(file_path, "/");
-						strcat(file_path, dir->d_name);
-				    	if (retval==1){
-				    		printf("Deleting\n");
-				    		remove(file_path);
+						strcat(file_path, buff);
+						fp = fopen(file_path, "w");
+						bzero(buff, MAX);
+						read(sockfd, buff, sizeof(buff));
+						fprintf(fp, "%s", buff);
+		    			bzero(buff, MAX);
+		  				fclose(fp);
+						printf("Done\n");
+					}
+					//Option Selector 3 - Send File to Client
+					else if (strncmp("3", buff, 1) == 0) {
+						printf("Copying\n");
+						bzero(buff, sizeof(buff));
+						read(sockfd, buff, sizeof(buff));
+						bzero(file_path, 40);
+						strcat(file_path, path);
+						strcat(file_path, "/");
+						strcat(file_path, buff);
+						fp = fopen(file_path, "r");
+						if (fp == NULL) {
+							perror("[-]Error in reading file.");
+							exit(1);
+						}
+						send_file(fp, sockfd);
+						fclose(fp);
+						printf("Done\n");
+					}
+					//Option Selector 4 - Remove Single File
+					else if (strncmp("4", buff, 1) == 0) {
+						printf("Removing Single File\n");
+						read(sockfd, buff, sizeof(buff));
+						bzero(file_path, 40);
+						strcat(file_path, path);
+						strcat(file_path, "/");
+						strcat(file_path, buff);
+						if (remove(file_path) == 0)
+							printf("Deleted successfully\n");
+						else
+							printf("Unable to delete the file\n");
+					}
+					//Option Selector 5 - Remove All Files
+					else if (strncmp("5", buff, 1) == 0) {
+						printf("Remove All Files\n");
+						d = opendir(path);
+					    while ((dir = readdir(d)) != NULL){
+					    	printf("%s\n", dir->d_name);
+					    	scanf("%d", &retval);
+					    	bzero(file_path, 40);
+							strcat(file_path, path);
+							strcat(file_path, "/");
+							strcat(file_path, dir->d_name);
+					    	if (retval==1){
+					    		printf("Deleting\n");
+					    		remove(file_path);
+					    	}
+					    	else
+					    		printf("Keeping\n");
 				    	}
-				    	else
-				    		printf("Keeping\n");
-			    	}
-			    	closedir(d);
-					printf("Done\n");
-				}
-				else if (strncmp("6", buff, 1) == 0) {
-					printf("Remove Acc\n");
-					strcat(file_path, path);
-					strcat(file_path, "/");
-					remove(file_path);
+				    	closedir(d);
+						printf("Done\n");
+					}
+					//Option Selector 6 - Remove Account
+					else if (strncmp("6", buff, 1) == 0) {
+						printf("Remove Acc\n");
+						strcat(file_path, path);
+						strcat(file_path, "/");
+						remove(file_path);
+						break;
+					}
+					//Option Selector 7 - Logout
+					else if (strncmp("7", buff, 1) == 0) {
+						printf("Logout...\n");
 					break;
+					}
+					else {
+						printf("Cmd Not Found\n");
+					}
 				}
-				else if (strncmp("7", buff, 1) == 0) {
-					printf("Server Exit...\n");
-				break;
-				}
-				else {
-					printf("Cmd Not Found\n");
-				}
-			}
 		}
 			else{
 				printf("Failed to Open Directory\n");
 			}
 			closedir(p);
 		}
+		// 0 - Criar Conta
 		else if (strncmp("0", buff, 1) == 0) {
 			read(sockfd, buff, sizeof(buff));
 			retval = create_account(buff);
             send(sockfd, &retval, sizeof(int), FLAGS);
 		}
+		// 7 - Fechar Programa
 		else if (strncmp("7", buff, 1) == 0) {
-			printf("Create/Log Exit...\n");
+			printf("Closing Server...\n");
 			break;
 		}
 		else{

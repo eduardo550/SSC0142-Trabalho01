@@ -41,6 +41,7 @@ void func(int sockfd)
 	while ((buff[n++] = getchar()) != '\n')
 		;
 	write(sockfd, buff, sizeof(buff));
+	//Opção 1 - Fazer Login
 	if (strncmp(buff, "1", 1) == 0) {
 		printf("Logging\n");
 		for(;;){
@@ -70,6 +71,7 @@ void func(int sockfd)
 				while ((buff[n++] = getchar()) != '\n')
 					;
 				write(sockfd, buff, sizeof(buff));
+				//Option Selector 1 - List Files
 				if (strncmp(buff, "1", 1) == 0){
 					read(sockfd, buff, sizeof(buff));
 					while(strncmp(buff, "-1", 2) != 0){
@@ -78,8 +80,9 @@ void func(int sockfd)
 						read(sockfd, buff, sizeof(buff));
 					}
 				}
+				//Option Selector 2 - Send File to Server
 				else if (strncmp(buff, "2", 1) == 0) {
-					//send file
+					//sending file
 					printf("Sending\n");
 					bzero(name, sizeof(name));
 					bzero(buff, sizeof(buff));
@@ -89,15 +92,18 @@ void func(int sockfd)
 					printf("File Name = %s\n", buff);
 					strncpy(name, buff, n-1);
 					fp = fopen(name, "r");
+					//send file name
 					write(sockfd, name, sizeof(name));
 					if (fp == NULL) {
 						perror("[-]Error in reading file.");
 						exit(1);
 					}
+					//send file
 					send_file(fp, sockfd);
 					fclose(fp);
 					printf("Sent File\n");
 				}
+				//Option Selector 3 - Copy File from Server
 				else if (strncmp(buff, "3", 1) == 0) {
 					printf("Sending File_Name\n");
 					bzero(name, sizeof(name));
@@ -115,6 +121,7 @@ void func(int sockfd)
 	  				fclose(fp);
 					printf("Done\n");
 				}
+				//Option Selector 4 - Delete Single File
 				else if (strncmp(buff, "4", 1) == 0) {
 					bzero(name, sizeof(name));
 					bzero(buff, sizeof(buff));
@@ -125,19 +132,22 @@ void func(int sockfd)
 					printf("File Name = %s\n", name);
 					write(sockfd, name, sizeof(name));
 				}
+				//Option Selector 5 - Delete All Files
 				else if (strncmp(buff, "5", 1) == 0) {
 					printf("Deleting All Files\n");
 				}
+				//Option Selector 6 - Delete Account + Logout
 				else if (strncmp(buff, "6", 1) == 0) {
 					printf("Deleting Account\n");
 					break;
 				}
+				//Option Selector 7 - Logout
 				else if (strncmp(buff, "7", 1) == 0) {
-					printf("Client Exit...\n");
+					printf("Logout...\n");
 					break;
 				}
 				else {
-					printf("Option %s\n", buff);
+					printf("Option %s not found\n", buff);
 				}
 			}
 			break;
@@ -147,6 +157,7 @@ void func(int sockfd)
 		}
 	}
 	}
+	//Opção 0 - Criar Conta
 	else if (strncmp(buff, "0", 1) == 0) {
 		printf("Creating\n");
 		bzero(buff, sizeof(buff));
@@ -164,8 +175,9 @@ void func(int sockfd)
 			printf("Account Created, Size=%ld.\n", strlen(buff)-1);
 		}
 	}
+	//Opção 7 - Sair do Programa
 	else if (strncmp(buff, "7", 1) == 0) {
-		printf("Client Conta Exit...\n");
+		printf("Closing Client...\n");
 		break;
 	}
 }
