@@ -1,10 +1,17 @@
-#include <netdb.h>
 #include <stdio.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 #define MAX 80
 #define PORT 8080
+#define FLAGS 0
 #define SA struct sockaddr
 
 void send_file(FILE *fp, int sockfd){
@@ -24,8 +31,8 @@ void func(int sockfd)
 {
 	char buff[MAX];
 	char name[MAX];
-	char username[17];
 	int n;
+	int retval;
 	FILE *fp;
 	for(;;){
 	printf("Criar(0), Logar(1) ou Sair(7)?\n");
@@ -34,20 +41,19 @@ void func(int sockfd)
 	while ((buff[n++] = getchar()) != '\n')
 		;
 	write(sockfd, buff, sizeof(buff));
-	bzero(buff, sizeof(buff));
-	read(sockfd, buff, sizeof(buff));
-	if (strncmp(buff, "Logando", 7) == 0) {
+	if (strncmp(buff, "1", 1) == 0) {
 		printf("Logging\n");
 		for(;;){
 		//Send Username
 		bzero(buff, sizeof(buff));
+		bzero(name, sizeof(name));
 		n = 0;
 		while ((buff[n++] = getchar()) != '\n')
 			;
-		write(sockfd, buff, sizeof(buff));
-		bzero(buff, sizeof(buff));
-		read(sockfd, buff, sizeof(buff));
-		if (strncmp(buff, "-1", 2) != 0) {
+		strncpy(name, buff, n-1);
+		write(sockfd, name, sizeof(name));
+		recv(sockfd, &retval, sizeof(int), FLAGS);
+		if (retval != -1) {
 			printf("Logado\n\n");
 				for(;;){
 				printf("Escolha uma opção:\n");
@@ -124,6 +130,7 @@ void func(int sockfd)
 				}
 				else if (strncmp(buff, "6", 1) == 0) {
 					printf("Deleting Account\n");
+					break;
 				}
 				else if (strncmp(buff, "7", 1) == 0) {
 					printf("Client Exit...\n");
@@ -140,10 +147,24 @@ void func(int sockfd)
 		}
 	}
 	}
-	else if (strncmp(buff, "Criando", 7) == 0) {
-		printf("Creating\n");		
+	else if (strncmp(buff, "0", 1) == 0) {
+		printf("Creating\n");
+		bzero(buff, sizeof(buff));
+		bzero(name, sizeof(name));
+		n = 0;
+		while ((buff[n++] = getchar()) != '\n')
+			;
+		strncpy(name, buff, n-1);
+		write(sockfd, name, sizeof(name));
+		recv(sockfd, &retval, sizeof(int), FLAGS);
+		if (retval == -1) {
+			printf("Account already exists.\n");
+		}
+		else{
+			printf("Account Created, Size=%ld.\n", strlen(buff)-1);
+		}
 	}
-	else if (strncmp(buff, "Saindo", 6) == 0) {
+	else if (strncmp(buff, "7", 1) == 0) {
 		printf("Client Conta Exit...\n");
 		break;
 	}

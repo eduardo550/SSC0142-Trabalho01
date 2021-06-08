@@ -5,10 +5,28 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 #define MAX 80
 #define PORT 8080
+#define FLAGS 0
 #define SA struct sockaddr
+
+int create_account(char *username) {
+    char path[20] = "db/";
+    struct stat s;
+    strcat(path, username);
+
+    if (stat(path, &s) != -1) {
+        printf("Account already exists.\n");
+        return -1;
+    } else {
+        mkdir(path, 0777);
+        return strlen(username);
+    }
+}
 
 void send_file(FILE *fp, int sockfd){
   int n;
@@ -27,10 +45,13 @@ void send_file(FILE *fp, int sockfd){
 void func(int sockfd)
 {
 	char buff[MAX];
+	char user[17];
+	char path[20];
+	char file_path[40];
 	FILE *fp;
-	DIR *d;
+	DIR *d, *p;
 	struct dirent *dir;
-	int n, z;
+	int n, retval;
 	// infinite loop for chat
 	for (;;) {
 		bzero(buff, MAX);
@@ -38,31 +59,42 @@ void func(int sockfd)
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
 		printf("From client: %s\n", buff);
+		// 1 - Login
 		if (strncmp("1", buff, 1) == 0) {
-			write(sockfd, "Logando", 7);
 			bzero(buff, MAX);
+			bzero(path, 20);
+			bzero(file_path, 40);
+			strcat(path,"db/");
 			read(sockfd, buff, sizeof(buff));
-			write(sockfd, "Valid", 5);
-			for(;;){
+			strcat(path, buff);
+			p = opendir(path);
+			if (p){
+				printf("Opened Directory\n");
+				write(sockfd, buff, sizeof(buff)); 
+				retval=strlen(buff);
+				send(sockfd, &retval, sizeof(int), FLAGS);
+				for(;;){
 				read(sockfd, buff, sizeof(buff));
 				if (strncmp("1", buff, 1) == 0) {
-					d = opendir(".");
-					if (d){
-					    while ((dir = readdir(d)) != NULL){
-					    	printf("%s\n", dir->d_name);
-					    	strcpy(buff,dir->d_name);
-				        	write(sockfd, buff, sizeof(buff));
-				        	bzero(buff, MAX);
-				    	}
-				    	closedir(d);
-					}
+					d = opendir(path);
+				    while ((dir = readdir(d)) != NULL){
+				    	printf("%s\n", dir->d_name);
+				    	strcpy(buff,dir->d_name);
+			        	write(sockfd, buff, sizeof(buff));
+			        	bzero(buff, MAX);
+			    	}
+			    	closedir(d);
 					write(sockfd, "-1", 2);
 					printf("Exit Loop\n");
 				}
 				else if (strncmp("2", buff, 1) == 0) {
 					printf("Receiving\n");
 					read(sockfd, buff, sizeof(buff));
-					fp = fopen(buff, "w");
+					bzero(file_path, 40);
+					strcat(file_path, path);
+					strcat(file_path, "/");
+					strcat(file_path, buff);
+					fp = fopen(file_path, "w");
 					bzero(buff, MAX);
 					read(sockfd, buff, sizeof(buff));
 					fprintf(fp, "%s", buff);
@@ -74,7 +106,11 @@ void func(int sockfd)
 					printf("Copying\n");
 					bzero(buff, sizeof(buff));
 					read(sockfd, buff, sizeof(buff));
-					fp = fopen(buff, "r");
+					bzero(file_path, 40);
+					strcat(file_path, path);
+					strcat(file_path, "/");
+					strcat(file_path, buff);
+					fp = fopen(file_path, "r");
 					if (fp == NULL) {
 						perror("[-]Error in reading file.");
 						exit(1);
@@ -86,31 +122,41 @@ void func(int sockfd)
 				else if (strncmp("4", buff, 1) == 0) {
 					printf("Removing Single File\n");
 					read(sockfd, buff, sizeof(buff));
-					if (remove(buff) == 0)
+					bzero(file_path, 40);
+					strcat(file_path, path);
+					strcat(file_path, "/");
+					strcat(file_path, buff);
+					if (remove(file_path) == 0)
 						printf("Deleted successfully\n");
 					else
 						printf("Unable to delete the file\n");
 				}
 				else if (strncmp("5", buff, 1) == 0) {
 					printf("Remove All Files\n");
-					d = opendir(".");
-					if (d){
-					    while ((dir = readdir(d)) != NULL){
-					    	printf("%s\n", dir->d_name);
-					    	scanf("%d", &z);
-					    	if (z==1){
-					    		printf("Deleting\n");
-					    		remove(dir->d_name);
-					    	}
-					    	else
-					    		printf("Keeping\n");
+					d = opendir(path);
+				    while ((dir = readdir(d)) != NULL){
+				    	printf("%s\n", dir->d_name);
+				    	scanf("%d", &retval);
+				    	bzero(file_path, 40);
+						strcat(file_path, path);
+						strcat(file_path, "/");
+						strcat(file_path, dir->d_name);
+				    	if (retval==1){
+				    		printf("Deleting\n");
+				    		remove(file_path);
 				    	}
-				    	closedir(d);
-					}
+				    	else
+				    		printf("Keeping\n");
+			    	}
+			    	closedir(d);
 					printf("Done\n");
 				}
 				else if (strncmp("6", buff, 1) == 0) {
 					printf("Remove Acc\n");
+					strcat(file_path, path);
+					strcat(file_path, "/");
+					remove(file_path);
+					break;
 				}
 				else if (strncmp("7", buff, 1) == 0) {
 					printf("Server Exit...\n");
@@ -121,12 +167,18 @@ void func(int sockfd)
 				}
 			}
 		}
+			else{
+				printf("Failed to Open Directory\n");
+			}
+			closedir(p);
+		}
 		else if (strncmp("0", buff, 1) == 0) {
-			write(sockfd, "Criando", 7);
+			read(sockfd, buff, sizeof(buff));
+			retval = create_account(buff);
+            send(sockfd, &retval, sizeof(int), FLAGS);
 		}
 		else if (strncmp("7", buff, 1) == 0) {
 			printf("Create/Log Exit...\n");
-			write(sockfd, "Saindo", 6);
 			break;
 		}
 		else{
