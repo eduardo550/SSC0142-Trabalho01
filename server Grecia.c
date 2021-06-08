@@ -9,26 +9,19 @@
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
-/*
-void write_file(int sockfd, char* buff){
-  int n;
-  FILE *fp;
-  char buffer[MAX];
 
-  fp = fopen(buff, "w");
-  while (1) {
-    n = recv(sockfd, buffer, MAX, 0);
-    if (n <= 0){
-      break;
-      return;
+void send_file(FILE *fp, int sockfd){
+  int n;
+  char data[MAX] = {0};
+
+  while(fgets(data, MAX, fp) != NULL) {
+    if (send(sockfd, data, sizeof(data), 0) == -1) {
+      perror("[-]Error in sending file.");
+      exit(1);
     }
-    fprintf(fp, "%s", buffer);
-    bzero(buffer, MAX);
+    bzero(data, MAX);
   }
-  fclose(fp);
-  return;
 }
-*/
 
 // Function designed for chat between client and server.
 void func(int sockfd)
@@ -37,7 +30,7 @@ void func(int sockfd)
 	FILE *fp;
 	DIR *d;
 	struct dirent *dir;
-	int n;
+	int n, z;
 	// infinite loop for chat
 	for (;;) {
 		bzero(buff, MAX);
@@ -57,7 +50,9 @@ void func(int sockfd)
 					if (d){
 					    while ((dir = readdir(d)) != NULL){
 					    	printf("%s\n", dir->d_name);
-				        	write(sockfd, dir->d_name, 30);
+					    	strcpy(buff,dir->d_name);
+				        	write(sockfd, buff, sizeof(buff));
+				        	bzero(buff, MAX);
 				    	}
 				    	closedir(d);
 					}
@@ -65,7 +60,7 @@ void func(int sockfd)
 					printf("Exit Loop\n");
 				}
 				else if (strncmp("2", buff, 1) == 0) {
-					printf("Sending\n");
+					printf("Receiving\n");
 					read(sockfd, buff, sizeof(buff));
 					fp = fopen(buff, "w");
 					bzero(buff, MAX);
@@ -73,22 +68,46 @@ void func(int sockfd)
 					fprintf(fp, "%s", buff);
 	    			bzero(buff, MAX);
 	  				fclose(fp);
-					printf("Sent\n");
+					printf("Done\n");
 				}
 				else if (strncmp("3", buff, 1) == 0) {
-					printf("Copy\n");
+					printf("Copying\n");
+					bzero(buff, sizeof(buff));
+					read(sockfd, buff, sizeof(buff));
+					fp = fopen(buff, "r");
+					if (fp == NULL) {
+						perror("[-]Error in reading file.");
+						exit(1);
+					}
+					send_file(fp, sockfd);
+					fclose(fp);
+					printf("Done\n");
 				}
 				else if (strncmp("4", buff, 1) == 0) {
 					printf("Removing Single File\n");
 					read(sockfd, buff, sizeof(buff));
 					if (remove(buff) == 0)
-						printf("Deleted successfully");
+						printf("Deleted successfully\n");
 					else
-						printf("Unable to delete the file");
-					printf("Removed\n");
+						printf("Unable to delete the file\n");
 				}
 				else if (strncmp("5", buff, 1) == 0) {
 					printf("Remove All Files\n");
+					d = opendir(".");
+					if (d){
+					    while ((dir = readdir(d)) != NULL){
+					    	printf("%s\n", dir->d_name);
+					    	scanf("%d", &z);
+					    	if (z==1){
+					    		printf("Deleting\n");
+					    		remove(dir->d_name);
+					    	}
+					    	else
+					    		printf("Keeping\n");
+				    	}
+				    	closedir(d);
+					}
+					printf("Done\n");
 				}
 				else if (strncmp("6", buff, 1) == 0) {
 					printf("Remove Acc\n");
@@ -98,12 +117,7 @@ void func(int sockfd)
 				break;
 				}
 				else {
-					printf("Test\n");
-					bzero(buff, sizeof(buff));
-					n = 0;
-					while ((buff[n++] = getchar()) != '\n')
-						;
-					write(sockfd, buff, sizeof(buff));
+					printf("Cmd Not Found\n");
 				}
 			}
 		}
@@ -112,6 +126,7 @@ void func(int sockfd)
 		}
 		else if (strncmp("7", buff, 1) == 0) {
 			printf("Create/Log Exit...\n");
+			write(sockfd, "Saindo", 6);
 			break;
 		}
 		else{

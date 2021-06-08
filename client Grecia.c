@@ -67,7 +67,8 @@ void func(int sockfd)
 				if (strncmp(buff, "1", 1) == 0){
 					read(sockfd, buff, sizeof(buff));
 					while(strncmp(buff, "-1", 2) != 0){
-						printf("X%sX\n", buff);
+						printf("%s\n", buff);
+						bzero(buff, sizeof(buff));
 						read(sockfd, buff, sizeof(buff));
 					}
 				}
@@ -91,7 +92,7 @@ void func(int sockfd)
 					fclose(fp);
 					printf("Sent File\n");
 				}
-				else if (strncmp(buff, "3", 1) == 0 || strncmp(buff, "4", 1) == 0) {
+				else if (strncmp(buff, "3", 1) == 0) {
 					printf("Sending File_Name\n");
 					bzero(name, sizeof(name));
 					bzero(buff, sizeof(buff));
@@ -101,7 +102,28 @@ void func(int sockfd)
 					strncpy(name, buff, n-1);
 					printf("File Name = %s\n", name);
 					write(sockfd, name, sizeof(name));
-					printf("Sent File_Name\n");
+					fp = fopen(name, "w");
+					printf("Receiving\n");
+					read(sockfd, buff, sizeof(buff));
+					fprintf(fp, "%s", buff);
+	  				fclose(fp);
+					printf("Done\n");
+				}
+				else if (strncmp(buff, "4", 1) == 0) {
+					bzero(name, sizeof(name));
+					bzero(buff, sizeof(buff));
+					n = 0;
+					while ((buff[n++] = getchar()) != '\n')
+						;
+					strncpy(name, buff, n-1);
+					printf("File Name = %s\n", name);
+					write(sockfd, name, sizeof(name));
+				}
+				else if (strncmp(buff, "5", 1) == 0) {
+					printf("Deleting All Files\n");
+				}
+				else if (strncmp(buff, "6", 1) == 0) {
+					printf("Deleting Account\n");
 				}
 				else if (strncmp(buff, "7", 1) == 0) {
 					printf("Client Exit...\n");
